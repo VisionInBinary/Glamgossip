@@ -1,53 +1,64 @@
+"use client";
+import { useState, useEffect } from "react";
+import { getNews } from "../lib/getNews";
 
-'use client';
-import { useEffect, useState } from 'react';
-
-function Card({ item }) {
-  return (
-    <a className="card" href={item.url} target="_blank" rel="noreferrer">
-      {item.image ? <img className="thumb" src={item.image} alt="" /> : <div className="thumb" />}
-      <div className="pad">
-        <div className="row">
-          <span className="badge">{item.domain}</span>
-          <span className="tag">{new Date(item.publishedAt).toLocaleString()}</span>
-        </div>
-        <div className="h2" style={{margin:'6px 0 6px'}}>{item.title}</div>
-        <div className="muted">{item.summary || ''}</div>
-      </div>
-    </a>
-  );
-}
-
-export default function Home() {
-  const [items, setItems] = useState([]);
-  const [nextPage, setNextPage] = useState(2);
+export default function HomePage() {
+  const [articles, setArticles] = useState([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [geoCategory, setGeoCategory] = useState("entertainment"); // default before location is known
 
-  const load = async (p=1) => {
+  useEffect(() => {
+    detectLocationAndLoad();
+    // eslint-disable-next-line
+  }, []);
+
+  async function detectLocationAndLoad() {
+    // First news load happens AFTER detecting location
     setLoading(true);
-    const res = await fetch(`/api/news?page=${p}`, { cache: 'no-store' });
-    const data = await res.json();
-    setItems(prev => p===1 ? data.items : [...prev, ...data.items]);
-    setNextPage(data.nextPage);
-    setLoading(false);
-  };
+    const location = await fetch(`https://ipinfo.io?token=${process.env.NEXT_PUBLIC_IPINFO_KEY}`);
+    const data = await location.json();
+    const country = data.country;
 
-  useEffect(()=>{ load(1); },[]);
+    // Decide category based on country
+    let category;
+    if (country === "IN") {
+      category = "bollywood"; // not an official NewsAPI category, but handled in getNews()
+    } else if (country === "US" || country === "GB") {
+      category = "hollywood";
+    } else {
+      category = "entertainment";
+    }
+    setGeoCategory(category);
+
+    const newArticles = await getNews(category, page, 10);
+    setArticles(newArticles);
+    setPage(prev => prev + 1);
+    setLoading(false);
+  }
+
+  async function loadMore() {
+    setLoading(true);
+    const newArticles = await getNews(geoCategory, page, 10);
+    setArticles(prev => [...prev, ...newArticles]);
+    setPage(prev => prev + 1);
+    setLoading(false);
+  }
 
   return (
-    <main>
-      <div className="container" style={{padding:'18px 16px'}}>
-        <div className="h1" style={{margin:'6px 0 14px'}}>Latest Celebrity News</div>
-        <div className="grid">
-          {items.map((it)=> <Card key={it.id} item={it} />)}
+    <main style={{ padding: "20px" }}>
+      <h1>Latest Celebrity News</h1>
+      {articles.map((a, idx) => (
+        <div key={idx} style={{ marginBottom: "20px" }}>
+          <h3>{a.title}</h3>
+          {a.urlToImage && <img src={a.urlToImage} alt="" style={{ maxWidth: "100%" }} />}
+          <p>{a.description}</p>
+          <a href={a.url} target="_blank" rel="noopener noreferrer">Read more</a>
         </div>
-        <div style={{marginTop:18}}>
-          <button className="loadmore" disabled={loading} onClick={()=> load(nextPage)}>
-            {loading ? 'Loading…' : 'Load more'}
-          </button>
-        </div>
-        <div className="notice">Homepage shows only the continuous news feed. Other categories are accessible via the top menu.</div>
-      </div>
+      ))}
+      <button onClick={loadMore} disabled={loading}>
+        {loading ? "Loading..." : "Load More"}
+      </button>
     </main>
   );
 }
