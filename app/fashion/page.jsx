@@ -4,10 +4,10 @@ export default function FashionPage() {
   return (
     <main>
       <div className="container" style={{ padding: '18px 16px' }}>
-        <div className="h1">Red Carpet Fashion</div>
-        <div className="muted" style={{ marginTop: 8 }}>
-          Dedicated page. Not shown on homepage.
-        </div>
+        <h1>Red Carpet Fashion</h1>
+        <p style={{ marginTop: 8 }}>
+          Stunning looks and outfits from the hottest events.
+        </p>
       </div>
     </main>
   );
