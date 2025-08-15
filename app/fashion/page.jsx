@@ -1,7 +1,8 @@
 
 "use client";
 import { useState, useEffect } from "react";
-import { getNews } from "../../lib/getNews";
+import getNews from '../../lib/getNews';
+
 
 export default function FashionPage() {
   const [articles, setArticles] = useState([]);
