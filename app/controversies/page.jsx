@@ -4,10 +4,10 @@ export default function ControversiesPage() {
   return (
     <main>
       <div className="container" style={{ padding: '18px 16px' }}>
-        <div className="h1">Latest Celebrity Controversies</div>
-        <div className="muted" style={{ marginTop: 8 }}>
-          Dedicated page. Not shown on homepage.
-        </div>
+        <h1>Celebrity Controversies</h1>
+        <p style={{ marginTop: 8 }}>
+          The latest buzz and controversies from the entertainment world.
+        </p>
       </div>
     </main>
   );
