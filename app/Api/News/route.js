@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { detectRegion, weightNews, paginate, fetchNewsAPI, fetchRSS } from '@/lib/getNews';
+import { detectRegion, weightNews, paginate, fetchNewsAPI, fetchRSS } from '../../../lib/getNews';
 import newsData from '../../../content/news.json';
 
 export async function GET(req) {
