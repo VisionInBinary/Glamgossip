@@ -1,64 +1,58 @@
+
 "use client";
-import { useState, useEffect } from "react";
-import { getNews } from "../lib/getNews";
+
+import { useEffect, useState } from "react";
+import { getNews } from "../lib/clientGetNews";
 
 export default function HomePage() {
   const [articles, setArticles] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [geoCategory, setGeoCategory] = useState("entertainment"); // default before location is known
+  const [nextPage, setNextPage] = useState(null);
 
   useEffect(() => {
-    detectLocationAndLoad();
-    // eslint-disable-next-line
+    loadNews(page);
   }, []);
 
-  async function detectLocationAndLoad() {
-    // First news load happens AFTER detecting location
+  async function loadNews(p) {
     setLoading(true);
-    const location = await fetch(`https://ipinfo.io?token=${process.env.NEXT_PUBLIC_IPINFO_KEY}`);
-    const data = await location.json();
-    const country = data.country;
-
-    // Decide category based on country
-    let category;
-    if (country === "IN") {
-      category = "bollywood"; // not an official NewsAPI category, but handled in getNews()
-    } else if (country === "US" || country === "GB") {
-      category = "hollywood";
-    } else {
-      category = "entertainment";
-    }
-    setGeoCategory(category);
-
-    const newArticles = await getNews(category, page, 10);
-    setArticles(newArticles);
-    setPage(prev => prev + 1);
+    const data = await getNews(p, 12); // page size 12
+    setArticles(prev => [...prev, ...data.items]);
+    setNextPage(data.nextPage);
     setLoading(false);
   }
 
-  async function loadMore() {
-    setLoading(true);
-    const newArticles = await getNews(geoCategory, page, 10);
-    setArticles(prev => [...prev, ...newArticles]);
-    setPage(prev => prev + 1);
-    setLoading(false);
+  function loadMore() {
+    if (nextPage) {
+      loadNews(nextPage);
+      setPage(nextPage);
+    }
   }
 
   return (
-    <main style={{ padding: "20px" }}>
-      <h1>Latest Celebrity News</h1>
-      {articles.map((a, idx) => (
-        <div key={idx} style={{ marginBottom: "20px" }}>
-          <h3>{a.title}</h3>
-          {a.urlToImage && <img src={a.urlToImage} alt="" style={{ maxWidth: "100%" }} />}
-          <p>{a.description}</p>
-          <a href={a.url} target="_blank" rel="noopener noreferrer">Read more</a>
-        </div>
-      ))}
-      <button onClick={loadMore} disabled={loading}>
-        {loading ? "Loading..." : "Load More"}
-      </button>
+    <main className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Latest Celebrity Gossip</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {articles.map((a) => (
+          <div key={a.id} className="rounded-lg shadow p-4 bg-white">
+            {a.image && <img src={a.image} alt={a.title} className="mb-2 w-full h-48 object-cover rounded" />}
+            <h2 className="font-semibold text-lg">{a.title}</h2>
+            <p className="text-sm text-gray-600">{a.summary}</p>
+            <a href={a.url} target="_blank" className="text-blue-500 text-sm mt-2 block">
+              Read more →
+            </a>
+          </div>
+        ))}
+      </div>
+      {loading && <p className="mt-4">Loading...</p>}
+      {nextPage && !loading && (
+        <button
+          onClick={loadMore}
+          className="mt-6 px-4 py-2 bg-black text-white rounded-lg"
+        >
+          Load More
+        </button>
+      )}
     </main>
   );
 }
